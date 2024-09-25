@@ -1,0 +1,70 @@
+version: "3.9"
+
+volumes:
+  db-store:
+  localstack-store:
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./infra/docker/backend/Dockerfile
+      target: development
+    volumes:
+      - "./backend:/app"
+    ports:
+      - "8081:3000"
+  db:
+    build:
+      context: .
+      dockerfile: ./infra/docker/db/Dockerfile
+    ports:
+      - target: 3306
+        published: ${DB_PUBLISHED_PORT:-3306}
+        protocol: tcp
+        mode: host
+    volumes:
+      - type: volume
+        source: db-store
+        target: /var/lib/mysql
+        volume:
+          nocopy: true
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE:-hono_tutorial}
+      - MYSQL_USER=${DB_USERNAME:-test}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-secret}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-secret}
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - target: 8025
+        published: 8025
+        protocol: tcp
+        mode: host
+  localstack:
+    image: localstack/localstack:3.0.2
+    ports:
+      - target: 4566
+        published: 4566
+        protocol: tcp
+        mode: host
+    volumes:
+      - ./infra/docker/localstack/scripts:/etc/localstack/init/ready.d
+      - localstack-store:/var/lib/localstack
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: myphpadmin
+    environment:
+      PMA_HOST: db
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+  frontend:
+    build:
+      context: .
+      dockerfile: ./infra/docker/frontend/Dockerfile
+    volumes:
+      - "./frontend:/app"
+    ports:
+      - "5173:5173"
