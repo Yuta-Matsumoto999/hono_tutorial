@@ -1,5 +1,1 @@
-FROM mysql/mysql-server:8.0
-
-ENV TZ=UTC
-
-COPY ./infra/docker/db/my.cnf /etc/my.cnf
+FROM postgres:14-bullseye
