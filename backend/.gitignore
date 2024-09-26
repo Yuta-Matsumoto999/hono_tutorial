@@ -3,3 +3,6 @@ node_modules/
 
 # environment variable
 .env
+
+# database setting
+src/db/drizzle/local/migrations
